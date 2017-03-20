@@ -96,6 +96,13 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
       this
     }
 
+    def printAt(i: Int): Unit = {
+      println(arr.zipWithIndex.map{
+        case (e,`i`) => "[" + e + "]"
+        case (e, _)  => e
+      }.mkString(", "))
+    }
+
     def induceSortL: this.type = {
       val bh = bucketHeads
 
@@ -107,13 +114,66 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
             arr(bh(bIndex)) = j
             bh(bIndex) += 1
 
-            println(arr.toSeq)
+            printAt(i)
           }
         }
       }
       this
     }
 
+    def induceSortS: this.type = {
+      val bt = bucketTails
+
+      cforRange(n to 0 by -1){ i =>
+        val j = arr(i) - 1
+        if(j >= 0 && !typeMap(j)){
+          val bIndex = bounds.toInt(seq(j))
+          arr(bt(bIndex)) = j
+          bt(bIndex) -= 1
+
+          printAt(i)
+        }
+      }
+      this
+    }
+
+    def summarize = {
+      val lmsNames = Array.fill(n + 1)(-1)
+      var currentName = 0
+      lmsNames(arr(0)) = currentName
+      var last: Int = arr(0)
+      var count = 1
+
+      cforRange(1 to n){ i =>
+        val current = arr(i)
+        if(isLMS(current)){
+          if(!lmsSubsEqual(current, last)) currentName += 1
+          last = current
+          lmsNames(current) = currentName
+          count += 1
+
+          println(arr.toSeq)
+        }
+      }
+
+
+      val size = currentName + 1
+      val offsets = Array.ofDim[Int](count)
+      val names = Array.ofDim[Int](count)
+
+      lmsNames.iterator.zipWithIndex.filter(_._1 != -1).zipWithIndex.foreach{
+        case ((offset, name), idx) =>
+          offsets(idx) = offset
+          names(idx) = name
+      }
+
+      Summary(names, size, offsets)
+    }
+
     override def toString = arr.mkString(s"Produced($seq)[", ", ", "]")
+  }
+
+  case class Summary(names: Array[Int], size: Int, offsets: Array[Int]){
+    override def toString = s"Summary(names = ${names.mkString("[", ", ", "]")}; size = $size; offsets= ${offsets.mkString("[", ", ", "]")})"
   }
 }
