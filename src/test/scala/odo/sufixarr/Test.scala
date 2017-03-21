@@ -1,10 +1,16 @@
 package odo.suffixarr
-import scala.util.Random
+import java.util
+
+import scala.util.{Random, Try}
 
 object Test {
   def randString = Random.nextString(100)
 
-  class Bench(name: String) {
+  abstract class Bench(val name: String) {
+    def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char]
+
+    def run(str: String)(implicit be: BoundEnum[Char]) = bench(method(str))
+
     private var measures: Vector[Double] = Vector.empty
     def bench[A](actions: ⇒ A): A = {
       val start = System.nanoTime()
@@ -23,21 +29,46 @@ object Test {
     def stats = s"$name avg: $average ; mid: $medium"
   }
 
-  def main(args: Array[String]): Unit = {
-    //    val string = "rikki-tikki-tikka"
-    val issaBench = new Bench("SA-IS")
-//    val naiveBench = new Bench("naive")
-    for (i ← 1 to 20) {
+  val benchMap = Seq(
+    new Bench("SA-IS") {
+      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SA_ISMaker(str)
+    },
+    new Bench("naive") {
+      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SuffixArray.NaiveMaker(str)
+    }
+  ).map(b ⇒ b.name → b).toMap
+
+  def bench(size: Int, count: Int, benchNames: Seq[String]): Unit = {
+    val benchs = benchNames.map(benchMap)
+    for (i ← 1 to count) {
       println(i)
 
-      val string = Random.nextString(30000)
+      val string = Random.nextString(size)
       implicit val char = BoundEnum.forElems(string)
-//      val naive = naiveBench.bench(SuffixArray.NaiveMaker(string))
-      val issa = issaBench.bench(SA_ISMaker(string))
-//      println(issa.suffixArray == naive.suffixArray)
+      benchs.foreach(_.run(string))
     }
+    benchs.foreach(b ⇒ println(b.stats))
+  }
 
-//    println(naiveBench.stats)
-    println(issaBench.stats)
+  def compare(str: String, be: Option[BoundEnum[Char]] = None): Unit = {
+    println(str)
+    implicit val bounds = be getOrElse BoundEnum.forElems(str)
+    val issa = SA_ISMaker(str)
+    val naive = SuffixArray.NaiveMaker(str)
+    assert(util.Arrays.equals(issa.suffixArray, naive.suffixArray), "suffix arrays distincts")
+    assert(util.Arrays.equals(issa.LCP, naive.LCP), "LCP distincts")
+  }
+
+  def main(args: Array[String]): Unit = args match {
+    case Array(IntString(size), IntString(count), names@_*) ⇒ bench(size, count, names)
+    case Array(IntString(size)) ⇒ compare(Random.nextString(size))
+    case Array(IntString(size), "ASCII") ⇒ compare(
+      str = Array.fill(size)(Random.nextInt(117) + 10).iterator.map(_.toChar).mkString,
+      be = Some(BoundEnum.ascii))
+    case Array(string) ⇒ compare(string)
+  }
+
+  object IntString {
+    def unapply(arg: String): Option[Int] = Try(arg.toInt).toOption
   }
 }

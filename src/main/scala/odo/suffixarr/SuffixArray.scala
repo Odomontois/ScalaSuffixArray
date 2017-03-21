@@ -8,8 +8,8 @@ import scala.collection.mutable
 
 abstract class SuffixArray[+C] {
   def original: IndexedSeq[C]
-  def suffixArray: IndexedSeq[Int]
-  def LCP: IndexedSeq[Int]
+  def suffixArray: Array[Int]
+  def LCP: Array[Int]
   override def toString = suffixArray.mkString("SuffixArray[", ",", "]")
 }
 
@@ -30,9 +30,27 @@ object SuffixArray {
 
     def apply[T: BoundEnum](seq: IndexedSeq[T]): SuffixArray[T] = new SuffixArray[T] {
       val original: IndexedSeq[T] = seq
-      val suffixArray: IndexedSeq[Int] = seq.tails.map(_.toIterable).toArray.sorted.map(seq.size - _.size)
-      val LCP: IndexedSeq[Int] = suffixArray.iterator.zip(suffixArray.tail.iterator).map { case (x, y) ⇒ lcp(seq.drop(x), seq.drop(y)) }.toArray
+      val suffixArray = seq.tails.map(_.toIterable).toArray.sorted.map(seq.size - _.size)
+      val LCP = suffixArray.iterator.zip(suffixArray.tail.iterator).map { case (x, y) ⇒ lcp(seq.drop(x), seq.drop(y)) }.toArray
     }
+  }
+
+  def lcpFromSA[A](seq: IndexedSeq[A], arr: Array[Int]): Array[Int] = {
+    val inverse = Array.ofDim[Int](arr.length)
+    val lcp = Array.ofDim[Int](seq.length)
+    cforRange(0 until arr.length) { i ⇒ inverse(arr(i)) = i }
+    var l = 0
+    val n = seq.size
+    cforRange(0 until arr.length) { i ⇒
+      var k = inverse(i)
+      if (k > 0) {
+        var j = arr(k - 1)
+        while ((j + l) < seq.size && seq(i + l) == seq(j + l)) l += 1
+        lcp(k - 1) = l
+        if (l > 0) l -= 1
+      }
+    }
+    lcp
   }
 }
 
@@ -84,11 +102,12 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
 
   def start = ProducedArray(Array.fill(n + 1)(-1))
 
-  def build: SuffixArray[C] = new SuffixArray[C] {
-    val original = seq
-    val suffixArray = start.complete.arr
-    val LCP = Array.ofDim[Int](0)
-  }
+  def build: SuffixArray[C] =
+    new SuffixArray[C] {
+      val original = seq
+      val suffixArray = start.complete.arr
+      val LCP = SuffixArray.lcpFromSA(seq, suffixArray)
+    }
 
   case class ProducedArray(arr: Array[Int]) {
     def guessLMSSort: this.type = {
@@ -116,12 +135,12 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
 
       cforRange(0 to n) { i ⇒
         if (arr(i) >= 0) {
-          val j = arr(i) - 1`
+          val j = arr(i) - 1
+
           if (j >= 0 && typeMap(j)) {
             val bIndex = bounds.toInt(seq(j))
             arr(bh(bIndex)) = j
             bh(bIndex) += 1
-
           }
         }
       }
@@ -137,7 +156,6 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
           val bIndex = bounds.toInt(seq(j))
           arr(bt(bIndex)) = j
           bt(bIndex) -= 1
-
         }
       }
       this
@@ -157,7 +175,6 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
           last = current
           lmsNames(current) = currentName
           count += 1
-
         }
       }
 
@@ -185,7 +202,6 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
         val bIndex = bounds.toInt(seq(idx))
         arr(bt(bIndex)) = idx
         bt(bIndex) -= 1
-
       }
       arr(0) = n
 
