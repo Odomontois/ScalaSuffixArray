@@ -20,13 +20,13 @@ trait BoundEnum[T] extends Ordering[T] {
 }
 
 object BoundEnum {
-  implicit val char = new BoundEnum[Char] {
+  implicit val ascii = new BoundEnum[Char] {
     def lower: Char = '\u0000'
-    def higher: Char = '\u00ff'
+    def higher: Char = '\u007f'
     def compare(x: Char, y: Char): Int = x - y
     def toInt(x: Char): Int = x.toInt
     def fromInt(x: Int): Char = x.toChar
-    override def size = 256
+    override def size = 128
   }
 
   implicit val byte = new BoundEnum[Byte] {
@@ -57,5 +57,14 @@ object BoundEnum {
     def toInt(x: T): Int = elemMap(x)
     def fromInt(x: Int): T = elemSeq(x)
     def compare(x: T, y: T): Int = ord.compare(x, y)
+  }
+
+  def intRange(from: Int, to: Int) = new BoundEnum[Int]{
+    override val size: Int = to - from + 1
+    val lower: Int = from
+    val higher: Int = to
+    def toInt(x: Int) = x - from
+    def fromInt(x: Int) = x  + from
+    def compare(x: Int, y: Int) = x - y
   }
 }
