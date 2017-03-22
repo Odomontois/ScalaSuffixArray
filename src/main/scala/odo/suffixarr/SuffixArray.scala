@@ -9,7 +9,7 @@ trait SuffixArray[C] {
   def LCP_LR: Array[Int]
   def bound: BoundEnum[C]
 
-  def searchAny(word: IndexedSeq[C]): Option[Int] = {
+  def searchSuffix(word: IndexedSeq[C]): Option[Int] = {
     var grow = false
     val n = original.length
     val m = word.length
@@ -28,9 +28,9 @@ trait SuffixArray[C] {
     }
 
     def go(from: Int, to: Int, matched: Int, idx: Int): Option[Int] = if (to - from == 1)
-      if (LCP(to) != matched) None
+      if (LCP(from) != matched) None
       else if (compareTo(to, matched) != word.length) None
-      else Some(suffixArray(to))
+      else Some(to)
     else {
       val newLCP = if (to - from == 2)
         if (grow) LCP(from + 1) else LCP(from)
@@ -45,13 +45,23 @@ trait SuffixArray[C] {
         else go(mid, to, newLCP, idx * 2 + 2)
       else {
         val newMatch = compareTo(mid, matched)
-        if (newMatch == word.length) Some(suffixArray(mid))
+        if (newMatch == word.length) Some(mid)
         else if (grow) go(mid, to, newMatch, idx * 2 + 2)
         else go(from, mid, newMatch, idx * 2 + 1)
       }
     }
 
     go(0, LCP.length, 0, 0)
+  }
+
+  def searchAny(word: IndexedSeq[C]): Option[Int] = searchSuffix(word).map(suffixArray)
+
+  def searchAll(word: IndexedSeq[C]): Seq[Int] = searchSuffix(word) match {
+    case None ⇒ Seq.empty
+    case Some(idx) ⇒
+      val from = ((idx - 1) to 0 by -1).takeWhile(i ⇒ LCP(i) >= word.length).lastOption.getOrElse(idx)
+      val to = ((idx + 1) to original.length).takeWhile(i ⇒ LCP(i - 1) >= word.length).lastOption.getOrElse(idx)
+      (from to to).map(suffixArray)
   }
 }
 

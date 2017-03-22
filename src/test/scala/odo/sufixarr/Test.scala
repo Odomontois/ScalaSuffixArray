@@ -61,8 +61,15 @@ object Test {
   }
 
   def match_in(string: String, pattern: String): Unit = {
+    println(s"string: $string, pattern : $pattern")
+    println("-" * 30)
     val arr = SuffixArray(string)
-    println(arr.searchAny(pattern).fold("NOT FOUND")(i ⇒ s"$i : ${string.drop(i)}"))
+    def report(i: Int) = println(s"$i : ${string.drop(i)}")
+    println("random occurrence")
+    arr.searchAny(pattern).fold(println("NOT FOUND"))(report)
+    println("-" * 30)
+    println("all occurrences")
+    arr.searchAll(pattern).foreach(report)
   }
 
   object Options {
