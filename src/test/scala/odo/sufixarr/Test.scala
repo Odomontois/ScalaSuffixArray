@@ -1,5 +1,6 @@
 package odo.suffixarr
 import java.util
+import java.util.regex.Pattern
 
 import scala.util.{Random, Try}
 
@@ -19,7 +20,7 @@ object Test {
       res
     }
 
-    def average = measures.sum.toDouble / measures.size
+    def average = measures.sum / measures.size
     def medium = {
       val srt = measures.sorted
       val idx = (measures.size + 1) / 2
@@ -38,12 +39,12 @@ object Test {
     }
   ).map(b ⇒ b.name → b).toMap
 
-  def bench(size: Int, count: Int, benchNames: Seq[String]): Unit = {
+  def bench(count: Int, benchNames: Seq[String])(make: ⇒ String): Unit = {
     val benchs = benchNames.map(benchMap)
     for (i ← 1 to count) {
       println(i)
 
-      val string = Random.nextString(size)
+      val string = make
       implicit val char = BoundEnum.forElems(string)
       benchs.foreach(_.run(string))
     }
@@ -59,13 +60,32 @@ object Test {
     assert(util.Arrays.equals(issa.LCP, naive.LCP), "LCP distincts")
   }
 
+  def match_in(string: String, pattern: String): Unit = {
+    val arr = SuffixArray(string)
+    println(arr.searchAny(pattern).fold("NOT FOUND")(i ⇒ s"$i : ${string.drop(i)}"))
+  }
+
+  object Options {
+    def unapply(arg: String): Option[Set[String]] = Some(arg.substring(1, arg.length - 1).split(",").map(_.trim.toLowerCase).toSet)
+  }
+  object Command {
+    val cmd = "(\\w+)(\\[.*\\])?".r
+    def nextAscii(size: Int) = Iterator.fill(size)(Random.nextInt(117) + 10).map(_.toChar).mkString
+
+    def unapply(arg: String): Option[(String, Int ⇒ String)] = arg match {
+      case cmd(name, null) ⇒ Some(name, size ⇒ Random.nextString(size))
+      case cmd(name, Options(opts)) if opts("ascii") ⇒ Some(name, size ⇒ nextAscii(size))
+    }
+  }
+
   def main(args: Array[String]): Unit = args match {
-    case Array(IntString(size), IntString(count), names@_*) ⇒ bench(size, count, names)
-    case Array(IntString(size)) ⇒ compare(Random.nextString(size))
-    case Array(IntString(size), "ASCII") ⇒ compare(
-      str = Array.fill(size)(Random.nextInt(117) + 10).iterator.map(_.toChar).mkString,
-      be = Some(BoundEnum.ascii))
-    case Array(string) ⇒ compare(string)
+    case Array(Command("BENCH", rnd), IntString(size), IntString(count), names@_*) ⇒ bench(count, names)(rnd(size))
+    case Array(Command("CYCLE", rnd), IntString(size), IntString(repeats), IntString(count), names@_*) ⇒ bench(count, names)(rnd(size) * repeats)
+    case Array(Command("CYCLECHECK", rnd), IntString(size), IntString(repeats)) ⇒ compare(rnd(size) * repeats)
+    case Array(Command("CHECK", rnd), IntString(size)) ⇒ compare(rnd(size))
+    case Array(Command("CHECK", rnd), IntString(size), IntString(repeat)) ⇒ compare(rnd(size) * repeat)
+    case Array(Command("CHECK", _), string) ⇒ compare(string)
+    case Array("MATCH", string, pattern) ⇒ match_in(string, pattern)
   }
 
   object IntString {
