@@ -33,7 +33,7 @@ trait SuffixArray[C] {
       else Some(to)
     else {
       val newLCP = if (to - from == 2)
-        if (grow) LCP(from + 1) else LCP(from)
+        if (grow) LCP(from) else LCP(from + 1)
       else if (grow) LCP_LR(idx * 2 + 1) else LCP_LR(idx * 2 + 2)
 
       val mid = (from + to) / 2
