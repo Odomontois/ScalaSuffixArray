@@ -39,6 +39,9 @@ object Test {
     },
     new Bench("SA-IS-Java") {
       def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SA_ISJMaker(str)
+    },
+    new Bench("SA-IS-JA") {
+      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SA_ISJasciiMaker(str)
     }
   ).map(b ⇒ b.name → b).toMap
 

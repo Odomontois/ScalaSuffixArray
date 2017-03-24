@@ -1,19 +1,19 @@
 package odo.suffixarr;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.function.IntToLongFunction;
 
-public class SA_ISJ extends SA_ISBase {
-    private IntSeq seq;
+public class SA_ISJascii {
+    private byte[] seq;
     private int n;
     private BitSet typeMap;
-    private int alphabetSize;
-
-    public SA_ISJ(IntSeq seq, int alphabetSize) {
-        this.seq = seq;
-        this.n = seq.size();
-        this.alphabetSize = alphabetSize;
+    private final static int alphabetSize = 256;
+    
+    
+    public SA_ISJascii(String seq) throws UnsupportedEncodingException {
+        this.seq = seq.getBytes("ASCII");
+        this.n = seq.length();
         bucketSizes = new int[alphabetSize];
         current = new int[n + 1];
         buildTypeMap();
@@ -30,7 +30,7 @@ public class SA_ISJ extends SA_ISBase {
         typeMap = new BitSet(n + 1);
         if (n > 0) typeMap.set(n - 1);
         for (int i = n - 2; i >= 0; i--) {
-            int res = seq.get(i) - seq.get(i + 1);
+            int res = seq[i] - seq[i + 1];
             if (res > 0 || (res == 0 && typeMap.get(i + 1))) typeMap.set(i);
         }
     }
@@ -48,7 +48,7 @@ public class SA_ISJ extends SA_ISBase {
     }
 
     private boolean lmsSubsEqual(int i, int j) {
-        if (i == n || j == n || seq.get(i) != seq.get(j)) return false;
+        if (i == n || j == n || seq[i] != seq[j]) return false;
         while (true) {
             i++;
             j++;
@@ -56,12 +56,12 @@ public class SA_ISJ extends SA_ISBase {
             boolean isLMSj = isLMS(j);
             if (isLMSi && isLMSj) return true;
             if (isLMSi != isLMSj) return false;
-            if (seq.get(i) != seq.get(j)) return false;
+            if (seq[i] != seq[j]) return false;
         }
     }
 
     private void buildBucketSizes() {
-        for (int i = 0; i < n; i++) bucketSizes[seq.get(i)]++;
+        for (int i = 0; i < n; i++) bucketSizes[seq[i]]++;
     }
 
     private int[] bucketHeads() {
@@ -103,7 +103,7 @@ public class SA_ISJ extends SA_ISBase {
         int[] bt = bucketTails();
         for (int i = 0; i < n; i++) {
             if (!isLMS(i)) continue;
-            int idx = seq.get(i);
+            int idx = seq[i];
             current[bt[idx]] = i;
             bt[idx]--;
         }
@@ -117,7 +117,7 @@ public class SA_ISJ extends SA_ISBase {
             if (current[i] == -1) continue;
             int j = current[i] - 1;
             if (j < 0 || !typeMap.get(j)) continue;
-            int idx = seq.get(j);
+            int idx = seq[j];
             current[bh[idx]] = j;
             bh[idx]++;
         }
@@ -129,7 +129,7 @@ public class SA_ISJ extends SA_ISBase {
         for (int i = n; i >= 0; i--) {
             int j = current[i] - 1;
             if (j < 0 || typeMap.get(j)) continue;
-            int idx = seq.get(j);
+            int idx = seq[j];
             current[bt[idx]] = j;
             bt[idx]--;
         }
@@ -171,7 +171,7 @@ public class SA_ISJ extends SA_ISBase {
         start();
         for (int i = summarySA.length - 1; i > 1; i--) {
             int idx = summaryOffsets[summarySA[i]];
-            int bIndex = seq.get(idx);
+            int bIndex = seq[idx];
             current[bt[bIndex]] = idx;
             bt[bIndex]--;
         }
