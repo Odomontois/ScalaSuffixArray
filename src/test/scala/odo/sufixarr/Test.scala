@@ -36,6 +36,9 @@ object Test {
     },
     new Bench("naive") {
       def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SuffixArray.NaiveMaker(str)
+    },
+    new Bench("SA-IS-Java") {
+      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SA_ISJMaker(str)
     }
   ).map(b ⇒ b.name → b).toMap
 
@@ -51,13 +54,13 @@ object Test {
     benchs.foreach(b ⇒ println(b.stats))
   }
 
-  def compare(str: String, be: Option[BoundEnum[Char]] = None): Unit = {
+  def compare(str: String, implName: String, be: Option[BoundEnum[Char]] = None): Unit = {
     println(str)
     implicit val bounds = be getOrElse BoundEnum.forElems(str)
-    val issa = SA_ISMaker(str)
+    val impl = benchMap(implName).method(str)
     val naive = SuffixArray.NaiveMaker(str)
-    assert(util.Arrays.equals(issa.suffixArray, naive.suffixArray), "suffix arrays distincts")
-    assert(util.Arrays.equals(issa.LCP, naive.LCP), "LCP distincts")
+    assert(util.Arrays.equals(impl.suffixArray, naive.suffixArray), "suffix arrays distincts")
+    assert(util.Arrays.equals(impl.LCP, naive.LCP), "LCP distincts")
   }
 
   def match_in(string: String, pattern: String): Unit = {
@@ -88,10 +91,10 @@ object Test {
   def main(args: Array[String]): Unit = args match {
     case Array(Command("BENCH", rnd), IntString(size), IntString(count), names@_*) ⇒ bench(count, names)(rnd(size))
     case Array(Command("CYCLE", rnd), IntString(size), IntString(repeats), IntString(count), names@_*) ⇒ bench(count, names)(rnd(size) * repeats)
-    case Array(Command("CYCLECHECK", rnd), IntString(size), IntString(repeats)) ⇒ compare(rnd(size) * repeats)
-    case Array(Command("CHECK", rnd), IntString(size)) ⇒ compare(rnd(size))
-    case Array(Command("CHECK", rnd), IntString(size), IntString(repeat)) ⇒ compare(rnd(size) * repeat)
-    case Array(Command("CHECK", _), string) ⇒ compare(string)
+    case Array(Command("CYCLECHECK", rnd), IntString(size), IntString(repeats), impl) ⇒ compare(rnd(size) * repeats, impl)
+    case Array(Command("CHECK", rnd), IntString(size), impl) ⇒ compare(rnd(size), impl)
+    case Array(Command("CHECK", rnd), IntString(size), IntString(repeat), impl) ⇒ compare(rnd(size) * repeat, impl)
+    case Array(Command("CHECK", _), string, impl) ⇒ compare(string, impl)
     case Array("MATCH", string, pattern) ⇒ match_in(string, pattern)
   }
 

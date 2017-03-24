@@ -40,9 +40,10 @@ trait SuffixArray[C] {
       if (newLCP > matched)
         if (grow) go(mid, to, matched, idx * 2 + 2)
         else go(from, mid, matched, idx * 2 + 1)
-      else if (newLCP < matched)
-        if (grow) go(from, mid, newLCP, idx * 2 + 1)
-        else go(mid, to, newLCP, idx * 2 + 2)
+      else if (newLCP < matched) {
+        if (grow) go(from, mid, matched, idx * 2 + 1)
+        else go(mid, to, matched, idx * 2 + 2)
+      }
       else {
         val newMatch = compareTo(mid, matched)
         if (newMatch == word.length) Some(mid)

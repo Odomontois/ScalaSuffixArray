@@ -131,10 +131,14 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
       val offsets = Array.ofDim[Int](count)
       val names = Array.ofDim[Int](count)
 
-      lmsNames.iterator.zipWithIndex.filter(_._1 != -1).zipWithIndex.foreach {
-        case ((name, offset), idx) =>
+      var idx = 0
+      cforRange(0 to n){ offset ⇒
+        val name = lmsNames(offset)
+        if(name != -1){
           offsets(idx) = offset
           names(idx) = name
+          idx += 1
+        }
       }
 
       summary = Summary(names, size, offsets)
