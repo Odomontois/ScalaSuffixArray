@@ -84,7 +84,7 @@ object SuffixArray {
     }
   }
 
-  def apply[T: BoundEnum](seq: IndexedSeq[T])(implicit maker: Maker[T] = SA_ISMaker): SuffixArray[T] = maker(seq)
+  def apply[T: BoundEnum](seq: IndexedSeq[T])(implicit maker: Maker[T] = SAISMaker): SuffixArray[T] = maker(seq)
 
   object NaiveMaker extends Maker[Any] {
     def lcp[T](as: IndexedSeq[T], bs: IndexedSeq[T])(implicit O: Ordering[T]): Int = as.zip(bs).takeWhile((O.equiv _).tupled).size

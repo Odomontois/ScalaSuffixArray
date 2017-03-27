@@ -32,16 +32,16 @@ object Test {
 
   val benchMap = Seq(
     new Bench("SA-IS") {
-      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SA_ISMaker(str)
+      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SAISMaker(str)
     },
     new Bench("naive") {
       def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SuffixArray.NaiveMaker(str)
     },
     new Bench("SA-IS-Java") {
-      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SA_ISJMaker(str)
+      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SAISJMaker(str)
     },
     new Bench("SA-IS-JA") {
-      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SA_ISJasciiMaker(str)
+      def method(str: String)(implicit be: BoundEnum[Char]): SuffixArray[Char] = SAISJasciiMaker(str)
     }
   ).map(b ⇒ b.name → b).toMap
 

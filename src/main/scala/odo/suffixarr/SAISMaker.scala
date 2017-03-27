@@ -5,11 +5,11 @@ import spire.syntax.cfor.cforRange
 
 import scala.collection.mutable
 
-object SA_ISMaker extends SuffixArray.Maker[Any] {
-  def apply[T: BoundEnum](seq: IndexedSeq[T]): SuffixArray[T] = new SA_ISMaker(seq).build
+object SAISMaker extends SuffixArray.Maker[Any] {
+  def apply[T: BoundEnum](seq: IndexedSeq[T]): SuffixArray[T] = new SAISMaker(seq).build
 }
 
-class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
+class SAISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
   val n = seq.size
   var summary: Summary = _
 
@@ -183,7 +183,7 @@ class SA_ISMaker[C](val seq: IndexedSeq[C])(implicit bounds: BoundEnum[C]) {
       result
     }
 
-    def induction: Array[Int] = new SA_ISMaker(names)(BoundEnum.intRange(0, size - 1)).start.complete.arr
+    def induction: Array[Int] = new SAISMaker(names)(BoundEnum.intRange(0, size - 1)).start.complete.arr
 
     def suffixArray = if (names.length == size) bucketSort else induction
 
